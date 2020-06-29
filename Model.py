@@ -36,21 +36,21 @@ class SemiUNet(nn.Module):
         super().__init__()
 
         ## Conv Layers for Feature Extraction
-        self.c1 = nn.Conv2d(3, 64)
-        self.b1 = nn.BatchNorm2d()
-        self.c2 = nn.Conv2d(64, 64)
-        self.b2 = nn.BatchNorm2d()
+        self.c1 = nn.Conv2d(3, 64, 5)
+        self.b1 = nn.BatchNorm2d(64)
+        self.c2 = nn.Conv2d(64, 64, 5)
+        self.b2 = nn.BatchNorm2d(64)
 
-        self.c3 = nn.Conv2d(128, 128)
-        self.b3 = nn.BatchNorm2d()
-        self.c4 = nn.Conv2d(128,128)
-        self.b4 = nn.BatchNorm2d()
+        self.c3 = nn.Conv2d(64, 128, 5)
+        self.b3 = nn.BatchNorm2d(128)
+        self.c4 = nn.Conv2d(128,128, 5)
+        self.b4 = nn.BatchNorm2d(128)
 
         self.d1 = nn.MaxPool2d(2)
-        self.c5 = nn.Conv2d(128,256)
+        self.c5 = nn.Conv2d(128,256, 5)
 
         self.d2 = nn.MaxPool2d(2)
-        self.c6 = nn.Conv2d(512)
+        self.c6 = nn.Conv2d(256, 512, 5)
 
         ## FC Layers for Classification
         self.final = nn.Sequential(
