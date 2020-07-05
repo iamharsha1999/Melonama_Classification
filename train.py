@@ -5,19 +5,19 @@ from Model import Resnet34, SemiUNet
 from Dataset import Melonama_Data
 from torch.utils.data import DataLoader
 import torch.nn as nn
-
+from sklearn.metrics import roc_auc_score
 
 MODEL = Resnet34()
 DEVICE = torch.device('cuda:0')
 MODEL = MODEL.to(DEVICE)
-LOSS_CRITERION = nn.BCELoss()
+LOSS_CRITERION = nn.BCEWithLogitsLoss()
 OPTIMIZER = Adam(MODEL.parameters(), lr = 1e-4)
 WEIGHT_BASE_PATH = 'weights/Resnet34/'
 BATCH_SIZE = 32
 EPOCHS = 50
 
 
-def train(fold = 0, MODEL = MODEL, DEVICE = DEVICE, OPTIMIZER = OPTIMIZER, BATCH_SIZE = BATCH_SIZE, LOSS_CRITERION = LOSS_CRITERION):
+def train(epoch,fold = 0, MODEL = MODEL, DEVICE = DEVICE, OPTIMIZER = OPTIMIZER, BATCH_SIZE = BATCH_SIZE, LOSS_CRITERION = LOSS_CRITERION):
 
     train_data = Melonama_Data(fold = fold)
     val_data = Melonama_Data(mode = 'val',fold = fold)
@@ -49,7 +49,7 @@ def train(fold = 0, MODEL = MODEL, DEVICE = DEVICE, OPTIMIZER = OPTIMIZER, BATCH
         correct += (output == target).float().sum()
 
 
-    epoch_acc['train_acc'] = float(correct/len(val_data))
+    epoch_acc['train_acc'] = float(correct/len(train_data))
     print('TRAINING_LOSS: {} TRAINING ACC: {}'.format(epoch_loss['train_loss'], epoch_acc['train_acc']))
    
     correct = 0
@@ -57,9 +57,9 @@ def train(fold = 0, MODEL = MODEL, DEVICE = DEVICE, OPTIMIZER = OPTIMIZER, BATCH
     ## Validation Data
     MODEL = MODEL.eval()
     for i in tqdm(range(len(val_data))):
-
-        images = images.view(1,3,156,156).to(DEVICE)
-        target = i['class'].to(DEVICE)       
+        inpt = val_data[i]['image']
+        inpt = inpt.view(1,3,156,156).to(DEVICE)
+        target = val_data[i]['class'].to(DEVICE)       
 
         with torch.no_grad():
             output = MODEL(inpt)
@@ -69,11 +69,11 @@ def train(fold = 0, MODEL = MODEL, DEVICE = DEVICE, OPTIMIZER = OPTIMIZER, BATCH
         correct += (output == target).float().sum()
 
     epoch_acc['val_acc'] = float(correct/len(val_data))
-    print('VAL_LOSS: {} VAL_ACC: {}'.format(epoch_loss['val_loss'], epoch_acc['val-loss']))
+    print('VAL_LOSS: {} VAL_ACC: {}'.format(epoch_loss['val_loss'], epoch_acc['val_acc']))
 
     print('Saving Model' +  WEIGHT_BASE_PATH + '{}_Acc:{}'.format(epoch+1, epoch_acc['train_acc']) + '.pt')
     torch.save(MODEL.state_dict(), WEIGHT_BASE_PATH + '{}_Acc:{}'.format(epoch+1, epoch_acc['train_acc']) + '.pt')
 
 for i in range(EPOCHS):
     print('EPOCH: {}'.format(i+1))
-    train(fold = i%5)
+    train(fold = i%5, epoch = i+1)
