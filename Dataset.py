@@ -8,7 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 
 class Melonama_Data(Dataset):
 
-    def __init__(self, mode = 'train', fold):
+    def __init__(self, fold, mode = 'train'):
         super().__init__()
 
         self.fold = fold 
@@ -29,11 +29,11 @@ class Melonama_Data(Dataset):
             self.img_path = 'jpeg/Resized_Images/train'
 
             ## Augmentation for Data
-             self.aug = Compose(
+            self.aug = Compose(
                             [HorizontalFlip(p=0.5),
-                            Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True)
+                            Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True),
                             VerticalFlip(p=0.5),
-                            MedianBlur(p=0.5),
+                            MedianBlur(p=0.5, blur_limit=5),
                             RandomContrast(p=0.5),
                             Rotate(p=0.5)
                             ])
@@ -52,7 +52,7 @@ class Melonama_Data(Dataset):
             self.img_path = 'jpeg/Resized_Images/train'
 
              ## Augmentation for Data
-             self.aug = Compose([Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True) ])
+            self.aug = Compose([Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True) ])
 
         ## Test Data
         elif csv_data == 'test.csv':
@@ -66,18 +66,18 @@ class Melonama_Data(Dataset):
             self.img_path = 'jpeg/Resized_Images/test'
 
             ## Augmentation for Data
-             self.aug = Compose([Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True) ])        
+            self.aug = Compose([Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True) ])        
 
 
     def __len__(self):
 
-        if self.mode = 'train':            
+        if self.mode == 'train':            
             return len(self.train_img_ids)
 
-        elif self.mode = 'val':
+        elif self.mode == 'val':
             return len(self.val_img_ids)
 
-        elif self.mode = 'test':
+        elif self.mode == 'test':
             return len(self.test_img_ids)
 
     def __getitem__(self, idx):

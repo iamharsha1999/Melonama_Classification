@@ -6,6 +6,7 @@ from Dataset import Melonama_Data
 from torch.utils.data import DataLoader
 import torch.nn as nn
 
+
 MODEL = Resnet34()
 DEVICE = torch.device('cuda:0')
 MODEL = MODEL.to(DEVICE)
@@ -15,12 +16,13 @@ WEIGHT_BASE_PATH = 'weights/Resnet34/'
 BATCH_SIZE = 32
 EPOCHS = 50
 
-def train(fold = 0):
+
+def train(fold = 0, MODEL = MODEL, DEVICE = DEVICE, OPTIMIZER = OPTIMIZER, BATCH_SIZE = BATCH_SIZE, LOSS_CRITERION = LOSS_CRITERION):
 
     train_data = Melonama_Data(fold = fold)
     val_data = Melonama_Data(mode = 'val',fold = fold)
 
-    train_batches = DataLoader(DATA, batch_size=BATCH_SIZE, shuffle = True, num_workers=6)
+    train_batches = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle = True, num_workers=6)
 
    
     epoch_acc  = {'train_acc':0, 'val_acc':0}
@@ -56,10 +58,10 @@ def train(fold = 0):
     MODEL = MODEL.eval()
     for i in tqdm(range(len(val_data))):
 
-       images = images.view(1,3,156,156).to(DEVICE)
+        images = images.view(1,3,156,156).to(DEVICE)
         target = i['class'].to(DEVICE)       
 
-        with torch.no_grad()
+        with torch.no_grad():
             output = MODEL(inpt)
         loss = LOSS_CRITERION(output, target)
         output = (output>0.5).float()
@@ -72,7 +74,6 @@ def train(fold = 0):
     print('Saving Model' +  WEIGHT_BASE_PATH + '{}_Acc:{}'.format(epoch+1, epoch_acc['train_acc']) + '.pt')
     torch.save(MODEL.state_dict(), WEIGHT_BASE_PATH + '{}_Acc:{}'.format(epoch+1, epoch_acc['train_acc']) + '.pt')
 
-
-
-for i range(EPOCHS):
+for i in range(EPOCHS):
+    print('EPOCH: {}'.format(i+1))
     train(fold = i%5)
