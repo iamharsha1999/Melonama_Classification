@@ -10,16 +10,8 @@ class Resnet34(nn.Module):
         self.base_model = pretrainedmodels.__dict__['resnet34'](pretrained  = None)
 
         num_ftrs = self.base_model.last_linear.in_features
-        self.final = nn.Sequential(
-                                nn.Linear(num_ftrs, 32),
-                                nn.ReLU(inplace = True),
-                                nn.Linear(32,16),
-                                nn.ReLU(inplace = True),
-                                nn.Linear(16,8),
-                                nn.ReLU(inplace = True),
-                                nn.Linear(8,1),
-                                nn.Sigmoid()
-            )
+        self.final = nn.Sequential(nn.Linear(num_ftrs, 1),
+                                                                    nn.Sigmoid())
         self.base_model.avgpool = None
         self.base_model.last_linear = None
 
@@ -32,13 +24,13 @@ class Resnet34(nn.Module):
         return x
 
 class SemiUNet(nn.Module):
-    def __init__(self):
+    def __init__(self, in_channels):
         super().__init__()
 
         ## Conv Layers for Feature Extraction
-        self.c1 = nn.Conv2d(3, 64, 5)
+        self.c1 = nn.Conv2d(in_channels, 64, 3)
         self.b1 = nn.BatchNorm2d(64)
-        self.c2 = nn.Conv2d(64, 64, 5)
+        self.c2 = nn.Conv2d(64, 64, 3)
         self.b2 = nn.BatchNorm2d(64)
 
         self.c3 = nn.Conv2d(64, 128, 5)
@@ -97,3 +89,34 @@ class SemiUNet(nn.Module):
         x = self.final(x)
 
         return x
+
+class SEResnext50_32x4d(nn.Module):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.base_model = pretrainedmodels.__dict__["se_resnext50_32x4d"](pretrained = 'imagenet')
+
+        num_ftrs = self.base_model.last_linear.in_features
+        self.final = nn.Sequential(
+                            nn.Linear(num_ftrs, 1),
+                            nn.Sigmoid()
+        )
+
+
+    def forward(self, x):
+
+        bs,_,_,_ = x.shape
+        x = self.base_model.features(x)
+        x = F.adaptive_avg_pool2d(x,1).reshape(bs,-1)
+        x = self.final(x)
+
+        return x 
+
+
+
+
+
+            
+

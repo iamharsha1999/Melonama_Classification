@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 from albumentations import HorizontalFlip, VerticalFlip, GaussNoise, MedianBlur, RandomContrast, Rotate,  Compose, Normalize
 from sklearn.model_selection import StratifiedKFold
 
+
 class Melonama_Data(Dataset):
 
     def __init__(self, fold, mode = 'train'):
@@ -15,41 +16,35 @@ class Melonama_Data(Dataset):
         self.mode = mode
 
         ## Train Data
-        if self.mode == 'train':
-                      
+        if self.mode == 'train':                      
             self.df = pd.read_csv('train_kfold.csv')
-            self.df.dropna(inplace = True)
-            self.df.reset_index(inplace = True)
+        
 
             ## For Training 
             self.train_img_ids = self.df[self.df.kfold!= self.fold].image_name.values
             self.train_targets  = self.df[self.df.kfold!= self.fold].target.values.reshape(-1,1)
 
             ## Image Path
-            self.img_path = 'jpeg/Resized_Images/train'
+            self.img_path = '/content/gdrive/My Drive/Deep Learning/Melanoma Classification/Resized_Images/train'
 
             ## Augmentation for Data
             self.aug = Compose(
                             [HorizontalFlip(p=0.5),
                             Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True),
                             VerticalFlip(p=0.5),
-                            MedianBlur(p=0.5, blur_limit=5),
-                            RandomContrast(p=0.5),
                             Rotate(p=0.5)
                             ])
 
         elif self.mode == 'val':
 
             self.df = pd.read_csv('train_kfold.csv')
-            self.df.dropna(inplace = True)
-            self.df.reset_index(inplace = True)
-
+            
             ## For Validation
             self.val_img_ids = self.df[self.df.kfold == self.fold].image_name.values
             self.val_targets = self.df[self.df.kfold == self.fold].target.values.reshape(-1,1)
 
             ## Image Path
-            self.img_path = 'jpeg/Resized_Images/train'
+            self.img_path = '/content/gdrive/My Drive/Deep Learning/Melanoma Classification/Resized_Images/train'
 
              ## Augmentation for Data
             self.aug = Compose([Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True) ])
@@ -63,7 +58,7 @@ class Melonama_Data(Dataset):
             self.test_targets = self.df.target.values.reshape(-1,1)
 
             ## Image Path
-            self.img_path = 'jpeg/Resized_Images/test'
+            self.img_path = '/content/gdrive/My Drive/Deep Learning/Melanoma Classification/Resized_Images/test'
 
             ## Augmentation for Data
             self.aug = Compose([Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225), max_pixel_value=255.0, always_apply=True) ])        
@@ -88,9 +83,10 @@ class Melonama_Data(Dataset):
             id = self.train_img_ids[idx]
             img  = cv2.imread(self.img_path + '/' + str(id) + '.jpg')
             img = self.aug(image = img)["image"]
+            img = np.transpose(img, (2,1,0))
 
             ## Tensors
-            img = torch.tensor(img, dtype=torch.float32).view(-1,156,156)
+            img = torch.tensor(img, dtype=torch.float)
             target_class = torch.tensor(self.train_targets[idx], dtype=torch.float32)
 
             return { 'image': img,
@@ -103,11 +99,12 @@ class Melonama_Data(Dataset):
             id = self.val_img_ids[idx]
             img  = cv2.imread(self.img_path + '/' + str(id) + '.jpg')
             img = self.aug(image = img)["image"]
+            img = np.transpose(img, (2,1,0))
 
             
             ## Tensors
-            img = torch.tensor(img, dtype=torch.float32).view(-1,156,156)
-            target_class = torch.tensor(self.val_targets[idx], dtype=torch.float32)
+            img = torch.tensor(img, dtype=torch.float)
+            target_class = torch.tensor(self.val_targets[idx], dtype=torch.float)
 
             return { 'image': img,
                             'class': target_class }
@@ -118,5 +115,8 @@ class Melonama_Data(Dataset):
             id = self.test_img_ids[idx]
             img  = cv2.imread(self.img_path + '/' + str(id) + '.jpg')
             img = self.aug(image = img)["image"]
+            img = np.transpose(img, (2,1,0))
+
+            img = torch.tensor(img, dtype=torch.float)
 
             return {'image': img }
